@@ -161,6 +161,7 @@ export class S3Store extends DataStore {
    */
   protected async saveMetadata(upload: Upload, uploadId: string) {
     log(`[${upload.id}] saving metadata`);
+    const bucket = this.getBucketFromUpload(upload);
     await this.client.putObject({
       Bucket: this.getBucketFromUpload(upload), // Utilize bucket from upload metadata if provided
       Key: this.infoKey(upload.id),
@@ -171,8 +172,7 @@ export class S3Store extends DataStore {
         "tus-version": TUS_RESUMABLE,
       },
     });
-    this.buckets.set(id, upload)
-    log(`[${upload.id}] metadata file saved`);
+    log(`[${upload.id}] metadata file saved to bucket ${bucket}`);
   }
 
   protected async completeMetadata(upload: Upload) {
@@ -250,14 +250,15 @@ export class S3Store extends DataStore {
     readStream: fs.ReadStream | Readable,
     partNumber: number
   ): Promise<string> {
+    const bucket = metadata.bucket ?? this.getBucketFromUpload(metadata.file);
     const data = await this.client.uploadPart({
-      Bucket: metadata.bucket ?? this.getBucketFromUpload(metadata.file),
+      Bucket: bucket,
       Key: metadata.file.id,
       UploadId: metadata["upload-id"],
       PartNumber: partNumber,
       Body: readStream,
     });
-    log(`[${metadata.file.id}] finished uploading part #${partNumber}`);
+    log(`[${metadata.file.id}] finished uploading part #${partNumber} on bucket ${bucket}`);
     return data.ETag as string;
   }
 
@@ -567,11 +568,15 @@ export class S3Store extends DataStore {
   public async create(upload: Upload) {
     log(`[${upload.id}] initializing multipart upload`);
 
+    const bucket = this.getBucketFromUpload(upload);
+
     const request: AWS.CreateMultipartUploadCommandInput = {
-      Bucket: this.getBucketFromUpload(upload),
+      Bucket: bucket,
       Key: upload.id,
       Metadata: { "tus-version": TUS_RESUMABLE },
     };
+
+    log (`[${upload.id}] targeting ${bucket}`)
 
     if (upload.metadata?.contentType) {
       request.ContentType = upload.metadata.contentType;
@@ -592,7 +597,6 @@ export class S3Store extends DataStore {
     await this.saveMetadata(upload, res.UploadId as string);
 
     // cache bucket reference
-    const bucket = this.getBucketFromUpload(upload);
     if (bucket) {
       this.bucketCache.set(upload.id, bucket);
     }
@@ -622,7 +626,7 @@ export class S3Store extends DataStore {
   ): Promise<number> {
     // Metadata request needs to happen first
     const fileMeta = await this.getMetadata(id);
-    const bucket = metadata.bucket ?? this.bucket;
+    const bucket = this.getBucketFromUploadId(id);
     const parts = await this.retrieveParts(id, bucket);
     // biome-ignore lint/style/noNonNullAssertion: it's fine
     const partNumber: number =
