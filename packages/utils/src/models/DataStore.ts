@@ -38,7 +38,8 @@ export class DataStore extends EventEmitter {
   async write(
     stream: http.IncomingMessage | stream.Readable,
     id: string,
-    offset: number
+    offset: number,
+    metadata?: Record<string, string | null>
   ) {
     return 0
   }

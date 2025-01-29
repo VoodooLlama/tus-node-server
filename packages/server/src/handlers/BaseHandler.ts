@@ -180,7 +180,7 @@ export class BaseHandler extends EventEmitter {
       // which would result in a socket hangup error for the client.
       stream
         .pipeline(data.pipe(proxy), new StreamLimiter(maxFileSize), async (stream) => {
-          return this.store.write(stream as StreamLimiter, upload.id, upload.offset)
+          return this.store.write(stream as StreamLimiter, upload.id, upload.offset, upload.metadata)
         })
         .then(resolve)
         .catch(reject)
