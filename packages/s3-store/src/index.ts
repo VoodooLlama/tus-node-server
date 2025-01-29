@@ -621,11 +621,10 @@ export class S3Store extends DataStore {
   public async write(
     src: stream.Readable,
     id: string,
-    offset: number,
-    metadata: Record<string, string>
+    offset: number
   ): Promise<number> {
     // Metadata request needs to happen first
-    const fileMeta = await this.getMetadata(id);
+    const metadata = await this.getMetadata(id);
     const bucket = this.getBucketFromUploadId(id);
     const parts = await this.retrieveParts(id, bucket);
     // biome-ignore lint/style/noNonNullAssertion: it's fine
@@ -648,7 +647,7 @@ export class S3Store extends DataStore {
     }
 
     const bytesUploaded = await this.uploadParts(
-      fileMeta,
+      metadata,
       src,
       nextPartNumber,
       offset
@@ -762,7 +761,7 @@ export class S3Store extends DataStore {
       },
     });
 
-    this.buckets.delete(id);
+    this.bucketCache.delete(id);
     this.clearCache(id);
   }
 
