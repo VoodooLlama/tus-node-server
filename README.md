@@ -1,4 +1,4 @@
-# tus-node-server Fork
+# tus-node-server
 
 <img alt="Tus logo" src="https://github.com/tus/tus.io/blob/main/public/images/tus1.png?raw=true" width="30%" align="right" />
 
@@ -23,7 +23,7 @@ easily be added to tus-node-server
 
 ## Contents
 
-- [tus-node-server Fork](#tus-node-server-fork)
+- [tus-node-server](#tus-node-server)
   - [Contents](#contents)
   - [When should I use this?](#when-should-i-use-this)
   - [Quick start](#quick-start)
